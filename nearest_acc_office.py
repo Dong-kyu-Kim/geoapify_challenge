@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[6]:
+
+
+get_ipython().system('pip install geoviews')
+get_ipython().system('pip install --upgrade hvplot holoviews')
+
+
+# In[1]:
+
+
+import json
+import requests
+import pandas as pd
+import hvplot.pandas
+import matplotlib.pyplot as plt
+from pathlib import Path
+from config import geoapifi_key
+
+
+# # Get the Longtitude and Latitude of Tower Palace
+
+# In[4]:
+
+
+# set the base URL for Geocoding API
+base_url = "https://api.geoapify.com/v1/geocode/search?"
+
+# set the request parameters for Tower Palace
+country = "Korea"
+name = "Tower Palace"
+city = "Seoul"
+postcode = "06293"
+format = "json"
+
+# create a parameter dictionary 
+params = {
+    "apiKey": geoapifi_key,
+    "format": format,
+    "country": country,
+    "city": city,
+    "postcode": postcode,
+    "name": name
+}
+
+# request the URL and convert the json data type into python data type
+response = requests.get(base_url, params = params).json()
+print(json.dumps(response, indent = 4, sort_keys = True))
+
+
+# In[5]:
+
+
+# get the latitude and longtitude data of Tower Palace
+latitude = response["results"][0]["lat"]
+longtitude = response["results"][0]["lon"]
+print(f"The latitude and longtitude of Tower Palace is {latitude} and {longtitude} each.")
+
+
+# # Get the list of 5 Nearest Accountant Offices to Tower Palace
+
+# In[7]:
+
+
+# set a base URL for places API
+base_url = "https://api.geoapify.com/v2/places?"
+
+# set the request parameters for nearest accountant offices to Tower Palace
+format = "json"
+categories = "office.accountant"
+filter = f"circle:{longtitude},{latitude},50000"
+bias = f"proximity:{longtitude},{latitude}"
+
+# create a parameter dictionary
+params = {
+    "apiKey": geoapifi_key,
+    "format": format,
+    "categories": categories,
+    "filter": filter,
+    "bias": bias,
+    "limit": 30
+}
+
+# request the URl based on the parameters and convert json data type to the python data type
+response = requests.get(base_url, params = params).json()
+print(json.dumps(response, indent = 4, sort_keys = True, ensure_ascii = False))
+
+
+# In[8]:
+
+
+# create lists for accountant office information
+name = []
+address = []
+lat = []
+lon = []
+
+# create a dictionary
+info_dic = {
+    "Name": name,
+    "Address": address,
+    "Latitude": lat,
+    "Longtitude": lon
+}
+
+# get the 5 nearest accountant offices to Tower Palace
+for acc_office in response["features"]:
+
+    office_name = acc_office["properties"]["name"]
+    office_address = acc_office["properties"]["address_line2"]
+    office_lat = acc_office["properties"]["lat"]
+    office_lon = acc_office["properties"]["lon"]
+
+    name.append(office_name)
+    address.append(office_address)
+    lat.append(office_lat)
+    lon.append(office_lon)
+
+# create a dataframe of accountant offices
+acc_office_df = pd.DataFrame(
+    data = info_dic
+)
+
+acc_office_df
+
+
+# In[9]:
+
+
+# plot the points of accountant office
+acc_point = acc_office_df.hvplot.points(
+    x = "Longtitude",
+    y = "Latitude",
+    geo = True,
+    tiles = "OSM",
+    color = 'Name',
+    alpha = 0.8,
+    frame_width = 700,
+    frame_height = 500,
+    size = 100,
+    hover_cols = 'all'
+)
+
+acc_point
+
+
+# In[ ]:
+
+
+
+
