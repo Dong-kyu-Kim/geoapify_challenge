@@ -1,5 +1,4 @@
 # geoapify_challenge
-geoapify_challenge
 
 # Finding the Closest Accountant Office to Tower Palace in Dogok-dong, Seoul Using Geoapify
 
